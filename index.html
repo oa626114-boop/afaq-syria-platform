@@ -113,7 +113,24 @@ info.hidden=false;info.innerHTML='';
 const title=document.createElement('h4');title.textContent=name;info.append(title);
 const p=document.createElement('p');p.textContent=subDescription(s,name);info.append(p);
 const details=document.createElement('p');details.textContent='المحتوى داخل هذا القسم: تعريف ونطاق العمل، معلومات ومواصفات أساسية، مبادرات ومشاريع مرتبطة، صور وملفات توضيحية، والجهات والشركاء ذوو الصلة عند توفر بيانات موثوقة.';info.append(details);
-const status=document.createElement('p');status.className='muted';status.textContent='لا توجد عناصر منشورة لهذا القسم حتى الآن؛ ستظهر هنا عند إضافتها من لوحة الإدارة.';info.append(status);
+const galleryTitle=document.createElement('h4');galleryTitle.textContent='معرض الصور';info.append(galleryTitle);
+const gallery=document.createElement('div');gallery.className='grid';gallery.style.marginTop='12px';
+const photoSets={
+jobs:['photo-1521737711867-e3b97375f902','photo-1552664730-d307ca884978','photo-1522202176988-66273c2fd55f'],
+investment:['photo-1486406146926-c627a92ad1ab','photo-1454165804606-c3d57bc86b40','photo-1460925895917-afdab827c52f'],
+energy:['photo-1509391366360-2e959784a276','photo-1466611653911-95081537e5b7','photo-1473341304170-971	?'],
+infrastructure:['photo-1486406146926-c627a92ad1ab','photo-1511818966892-d7d671e672a2','photo-1541888946425-d81bb19240f5'],
+health:['photo-1586773860418-d37222d8fce3','photo-1576091160399-112ba8d25d1d','photo-1519494026892-80bbd2d6fd0d'],
+humanitarian:['photo-1488521787991-ed7bbaae773c','photo-1469571486292-0ba58a3f068b','photo-1489493585363-d69421e0edd3'],
+partners:['photo-1521737711867-e3b97375f902','photo-1521791136064-7986c2920216','photo-149﻿
+
+'];
+technology:['photo-1518770660439-4636190af475','photo-1519389950473-47ba0277781c','photo-1550751827-4bd374c3f58b']
+};
+const ids=photoSets[s.id]||photoSets.technology;
+ids.forEach((id,i)=>{const card=document.createElement('div');card.className='card';card.style.padding='8px';const img=document.createElement('img');img.src='https://images.unsplash.com/'+id+'?auto=format&fit=crop&w=900&q=75';img.alt=name+' — صورة توضيحية '+(i+1);img.loading='lazy';img.style.width='100%';img.style.height='150px';img.style.objectFit='cover';img.style.borderRadius='8px';img.onerror=()=>{card.textContent='الصورة التوضيحية غير متاحة حالياً'};card.append(img);gallery.append(card)});
+info.append(gallery);
+const status=document.createElement('p');status.className='muted';status.textContent='الصور المعروضة توضيحية للمجال. يمكن استبدالها بصور المشروع الفعلية عند إضافتها من لوحة الإدارة.';info.append(status);
 });subgrid.append(b)});
 box.append(subgrid);
 const info=document.createElement('div');info.className='sub-info';info.hidden=true;box.append(info);

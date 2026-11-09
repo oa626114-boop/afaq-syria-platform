@@ -33,7 +33,94 @@ const defaults=[
 function read(){try{return JSON.parse(localStorage.getItem(KEY))||{sectors:defaults,projects:[],requests:[]}}catch(e){return{sectors:defaults,projects:[],requests:[]}}}
 function save(d){localStorage.setItem(KEY,JSON.stringify(d))}
 function renderSectors(){const d=read();document.getElementById('sectorGrid').innerHTML=d.sectors.map(s=>'<article class="card sector" tabindex="0" role="button" data-id="'+s.id+'"><span class="num">'+s.n+'</span><h3>'+esc(s.title)+'</h3><p>'+esc(s.desc)+'</p><p style="color:var(--g2);margin-top:12px">فتح التفاصيل ←</p></article>').join('');document.querySelectorAll('.sector').forEach(el=>{const open=()=>showSector(el.dataset.id);el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})})}
-function showSector(id){const s=read().sectors.find(x=>x.id===id);if(!s)return;const projects=read().projects.filter(p=>p.sector===id);const box=document.getElementById('sectorDetail');box.innerHTML='<button class="alt" onclick="document.getElementById(\'sectorDetail\').classList.remove(\'open\')">إغلاق ×</button><h2 style="text-align:right">'+esc(s.title)+'</h2><p>'+esc(s.intro||s.desc)+'</p><h3>الأقسام الفرعية — اضغط على أي قسم لعرض معلوماته</h3><div class="subgrid">'+(s.subs||[]).map((x,i)=>'<button type="button" class="sub" data-sub-index="'+i+'">'+esc(x)+'　›</button>').join('')+'</div><div id="subInfo" class="sub-info" hidden></div><h3>المشاريع المرتبطة</h3><div class="grid">'+(projects.length?projects.map(projectHTML).join(''):'<div class="empty">لا توجد مشاريع منشورة في هذا المجال بعد.</div>')+'</div>';box.classList.add('open');box.querySelectorAll('[data-sub-index]').forEach(btn=>btn.addEventListener('click',()=>{box.querySelectorAll('[data-sub-index]').forEach(x=>x.classList.remove('active'));btn.classList.add('active');const name=s.subs[Number(btn.dataset.subIndex)];const info=box.querySelector('#subInfo');info.hidden=false;info.innerHTML='<h4>'+esc(name)+'</h4><p>'+esc('يعرض هذا القسم المعلومات والتعريفات والمبادرات والمشاريع المرتبطة بـ '+name+'، بما يشمل الأهداف والاحتياجات والجهات ذات الصلة وحالة التطوير وفرص التعاون. سيتم إضافة التفاصيل والملفات والصور الخاصة بهذا القسم عند إدخالها من لوحة الإدارة.')+'</p>'}));box.scrollIntoView({behavior:'smooth',block:'start'})}
+function subDescription(sector, name){
+const title=sector.title;
+const templates={
+'فرص العمل والتوظيف':'يركز هذا القسم على التعريف بالمسارات المهنية والمهارات المطلوبة والجهات ذات الصلة، مع معلومات تساعد الزائر على فهم المجال والاستعداد له.',
+'المشاريع والاستثمار':'يعرض هذا القسم الأفكار والمبادرات والمشاريع ومراحلها واحتياجاتها الفنية ومعلومات التواصل بشأن فرص التعاون، دون تنفيذ عمليات استثمار أو تحصيل أموال.',
+'الطاقة والموارد':'يعرض هذا القسم التقنيات والحلول والمشاريع المرتبطة بالطاقة والموارد وكفاءة الاستخدام والاستدامة.',
+'البناء والبنية التحتية':'يعرض هذا القسم مشاريع التخطيط والبناء والتأهيل والبنية التحتية، مع تعريف بالنطاق والمراحل والاحتياجات والشركاء.',
+'الصحة والمستشفيات':'يعرض هذا القسم معلومات ومبادرات ومشاريع صحية بالتعاون مع المؤسسات والجهات المختصة والمرخصة.',
+'الإيواء والدعم الإنساني':'يعرض هذا القسم معلومات المبادرات والجهات العاملة والاحتياجات وبرامج التعافي والإيواء. لا يستقبل الموقع تبرعات أو أموالاً.',
+'الشركات والشركاء':'يعرض هذا القسم ملفات تعريفية للشركات والموردين والخبراء والمؤسسات، ومجالات الخبرة والتعاون وبيانات التواصل المنشورة بموافقة أصحابها.',
+'التقنية والاتصالات':'يعرض هذا القسم الحلول الرقمية والبنية التقنية والاتصالات والابتكار والأمن والتدريب التقني.'
+};
+const detail={
+'المهارات والتدريب المهني':'المهارات المطلوبة، المسارات التدريبية، الشهادات المهنية، ومصادر التعلم.',
+'المهن الهندسية والفنية':'التخصصات الهندسية والفنية، مجالات العمل، ومتطلبات الخبرة والسلامة.',
+'الإدارة والمالية':'الإدارة، المحاسبة، إدارة المشاريع، التخطيط، والمهارات المالية.',
+'الزراعة والصناعات':'المهن الزراعية، التصنيع الغذائي، التشغيل، وسلاسل التوريد.',
+'التقنية والبرمجة':'تطوير البرمجيات، تحليل البيانات، الشبكات، والدعم التقني.',
+'دليل الجهات المهنية':'تعريف بالجهات المهنية والمؤسسات ومصادر المعلومات ذات الصلة.',
+'المشاريع قيد الدراسة':'فكرة المشروع، دراسة الاحتياج، الموقع المقترح، والمرحلة الحالية.',
+'المشاريع قيد التطوير':'نطاق العمل، مراحل التطوير، المتطلبات، والتقدم المعلن.',
+'المشاريع الجاهزة للتعاون':'ملخص المشروع، نوع الخبرة المطلوبة، ومجالات التعاون الممكنة.',
+'دراسات الجدوى والأبحاث':'ملخص الدراسات، الافتراضات، البيانات المتاحة، والنتائج المنشورة.',
+'الشراكات والخبرات':'الخبرات المطلوبة، الجهات المحتملة، وأشكال التعاون المقترحة.',
+'قصص الإنجاز':'عرض الإنجازات الموثقة، النتائج، الصور، والدروس المستفادة.',
+'الطاقة الشمسية':'أنظمة الألواح الشمسية، محطات التوليد، الاستخدامات، والصيانة.',
+'طاقة الرياح':'توربينات الرياح، تقييم المواقع، التشغيل، وربط الطاقة.',
+'الطاقة المائية والبحرية':'حلول الطاقة المائية والبحرية، دراسات المواقع، والتقنيات المناسبة.',
+'تخزين الطاقة':'البطاريات، أنظمة التخزين، السلامة، وإدارة الأحمال.',
+'كفاءة الطاقة':'ترشيد الاستهلاك، كفاءة المباني والمنشآت، والتدقيق الطاقي.',
+'إدارة المياه والموارد':'إدارة المياه، إعادة الاستخدام، كفاءة الموارد، والحلول المستدامة.',
+'الطرق والجسور':'تخطيط الطرق، الجسور، الصيانة، وإعادة التأهيل.',
+'العقارات والإسكان':'التخطيط السكني، تطوير العقارات، الإسكان، وإعادة التأهيل.',
+'المباني والمنشآت':'التصميم، الإنشاء، إدارة المواقع، وجودة التنفيذ.',
+'المياه والصرف الصحي':'شبكات المياه، الصرف الصحي، المعالجة، والبنية الخدمية.',
+'الموانئ والنقل':'الموانئ، الخدمات اللوجستية، النقل، وسلاسل الإمداد.',
+'التخطيط وإعادة التأهيل':'التخطيط العمراني، تقييم الأضرار، وإعادة تأهيل المنشآت.',
+'المستشفيات والمراكز الطبية':'معلومات المنشآت والمبادرات والاحتياجات بالتنسيق مع الجهات الصحية المرخصة.',
+'الرعاية الأولية':'الخدمات الوقائية، الرعاية المجتمعية، والإحالة إلى الجهات الصحية.',
+'التجهيزات الطبية':'الأجهزة والتجهيزات، متطلبات التشغيل، والصيانة الفنية.',
+'الصحة الرقمية':'الأنظمة الصحية الرقمية، إدارة المعلومات، وحلول الاتصال الصحي.',
+'التدريب الصحي':'التعليم المستمر، التدريب المهني، وتنمية الكوادر الصحية.',
+'الشراكات الصحية':'التعاون المؤسسي، تبادل الخبرات، والمبادرات الصحية المشتركة.',
+'الإيواء والسكن':'حلول السكن والإيواء، تقييم الاحتياجات، ومعايير السلامة والخصوصية.',
+'التعليم والتأهيل':'التعليم، التدريب، التأهيل، ودعم الوصول إلى فرص التعلم.',
+'الأمن الغذائي':'الإنتاج الغذائي، سلاسل الإمداد، التخزين، وتقليل الهدر.',
+'دعم الأسر':'معلومات البرامج والجهات التي تقدم خدمات دعم الأسر وسبل الوصول إليها.',
+'التعافي المجتمعي':'المبادرات المحلية، إعادة تنشيط الخدمات، وبناء قدرات المجتمع.',
+'المنظمات والشركاء':'تعريف بالمنظمات والجهات العاملة ومجالات اختصاصها وشراكاتها.',
+'الشركات المحلية':'ملفات الشركات المحلية، المنتجات والخدمات، ومعلومات الاتصال المنشورة.',
+'الشركات الدولية':'الشركات الدولية، مجالات العمل، والخبرات والحضور المعلن.',
+'الموردون والمصنعون':'المنتجات، قدرات التصنيع، التوريد، ومعايير الجودة.',
+'الخبراء والاستشاريون':'التخصصات، الخبرات المهنية، ومجالات الاستشارة.',
+'الجامعات ومراكز البحث':'المؤسسات الأكاديمية، الأبحاث، المختبرات، وفرص التعاون العلمي.',
+'فرص الشراكة':'مجالات الشراكة، متطلبات التعاون، ونموذج التواصل الأولي.',
+'البرمجيات والمنصات':'تطبيقات الويب والهواتف، المنصات الرقمية، تكامل الأنظمة، وتجربة المستخدم.',
+'الاتصالات والإنترنت':'شبكات الاتصال، الإنترنت، الربط، البنية التحتية، وجودة الخدمة.',
+'الذكاء الاصطناعي':'تحليل البيانات، الأتمتة، تطبيقات الذكاء الاصطناعي، والاستخدام المسؤول.',
+'الأمن السيبراني':'حماية الأنظمة، إدارة المخاطر، التوعية، والنسخ الاحتياطي.',
+'إنترنت الأشياء':'المستشعرات، الأجهزة المتصلة، المراقبة، والتحكم الذكي.',
+'التدريب والابتكار':'التدريب التقني، حاضنات الأفكار، النماذج الأولية، ونقل المعرفة.'
+};
+return detail[name] || templates[title] || 'معلومات تعريفية ونطاق العمل والاحتياجات والجهات ذات الصلة.';
+}
+function showSector(id){
+const d=read(),s=d.sectors.find(x=>x.id===id);if(!s)return;
+const projects=d.projects.filter(p=>p.sector===id);
+const box=document.getElementById('sectorDetail');
+box.innerHTML='';
+const close=document.createElement('button');close.type='button';close.className='alt';close.textContent='إغلاق ×';close.addEventListener('click',()=>box.classList.remove('open'));box.append(close);
+const h=document.createElement('h2');h.style.textAlign='right';h.textContent=s.title;box.append(h);
+const intro=document.createElement('p');intro.textContent=s.intro||s.desc;box.append(intro);
+const subHeading=document.createElement('h3');subHeading.textContent='الأقسام الفرعية — اختر قسماً لفتح معلوماته';box.append(subHeading);
+const subgrid=document.createElement('div');subgrid.className='subgrid';
+(s.subs||[]).forEach((name,i)=>{const b=document.createElement('button');b.type='button';b.className='sub';b.textContent=name+'　›';b.addEventListener('click',()=>{
+subgrid.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+info.hidden=false;info.innerHTML='';
+const title=document.createElement('h4');title.textContent=name;info.append(title);
+const p=document.createElement('p');p.textContent=subDescription(s,name);info.append(p);
+const details=document.createElement('p');details.textContent='المحتوى داخل هذا القسم: تعريف ونطاق العمل، معلومات ومواصفات أساسية، مبادرات ومشاريع مرتبطة، صور وملفات توضيحية، والجهات والشركاء ذوو الصلة عند توفر بيانات موثوقة.';info.append(details);
+const status=document.createElement('p');status.className='muted';status.textContent='لا توجد عناصر منشورة لهذا القسم حتى الآن؛ ستظهر هنا عند إضافتها من لوحة الإدارة.';info.append(status);
+});subgrid.append(b)});
+box.append(subgrid);
+const info=document.createElement('div');info.className='sub-info';info.hidden=true;box.append(info);
+const ph=document.createElement('h3');ph.textContent='المشاريع المرتبطة';box.append(ph);
+const pg=document.createElement('div');pg.className='grid';pg.innerHTML=projects.length?projects.map(projectHTML).join(''):'<div class="empty">لا توجد مشاريع منشورة في هذا المجال بعد.</div>';box.append(pg);
+box.classList.add('open');box.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function projectHTML(p){return '<article class="card project">'+(p.image?'<img src="'+p.image+'" alt="'+esc(p.title)+'">':'')+'<h3>'+esc(p.title)+'</h3><p>'+esc(p.description)+'</p><p class="muted" style="margin-top:8px">'+esc((read().sectors.find(s=>s.id===p.sector)||{}).title||'')+'</p></article>'}
 function renderProjects(){const ps=read().projects;document.getElementById('projectGrid').innerHTML=ps.length?ps.map(projectHTML).join(''):'<div class="empty">لا توجد مشاريع منشورة حالياً. يمكن إضافتها من لوحة الإدارة.</div>'}

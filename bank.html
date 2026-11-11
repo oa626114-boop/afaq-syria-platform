@@ -25,10 +25,15 @@
 </main><footer><div class="wrap">AFAQ SYRIA · مصرف آفاق · نموذج تجريبي محلي غير مصرفي</div></footer>
 <script>
 const STORE='afaqBankDemoLedgerV1';
-const initial=()=>({holder:'عمر علي',customerId:'',phone:'',email:'',currency:'TRY',balance:0,account:'AFAQ-DEMO-000001',transactions:[]});
+const initial=()=>({holder:'عمر علي',customerId:'AFAQ-C-00000001',phone:'',email:'',currency:'USD',balance:1000,account:'AFAQ-DEMO-000001',transactions:[{type:'credit',amount:1000,holder:'عمر علي',note:'رصيد افتتاحي تجريبي',date:new Date().toISOString()}]});
 function read(){try{const v=JSON.parse(localStorage.getItem(STORE));return v&&Array.isArray(v.transactions)?v:initial()}catch(e){return initial()}}
 let state=read();
-if(!state.holder||!state.holder.trim()){state.holder='عمر علي';localStorage.setItem(STORE,JSON.stringify(state))}
+const SETUP_KEY='afaqBankDemoSetupV2';
+if(localStorage.getItem(SETUP_KEY)!=='done'){
+ state={...state,holder:'عمر علي',customerId:state.customerId||'AFAQ-C-00000001',currency:'USD',balance:1000,transactions:[{type:'credit',amount:1000,holder:'عمر علي',note:'رصيد افتتاحي تجريبي',date:new Date().toISOString()}]};
+ localStorage.setItem(STORE,JSON.stringify(state));
+ localStorage.setItem(SETUP_KEY,'done');
+}
 function save(){localStorage.setItem(STORE,JSON.stringify(state));render()}
 function money(n){return new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' '+state.currency}
 function render(){document.getElementById('mainBalance').textContent=money(state.balance);document.getElementById('accountNumber').textContent=state.account;document.getElementById('transactionCount').textContent=state.transactions.length;document.getElementById('accountHolder').value=state.holder;document.getElementById('customerPhone').value=state.phone||'';document.getElementById('customerEmail').value=state.email||'';document.getElementById('overviewHolder').textContent=state.holder||'لم يتم إدخال الاسم بعد';document.getElementById('overviewCustomerId').textContent='رقم العميل: '+(state.customerId||'—');document.getElementById('overviewPhone').textContent='الهاتف: '+(state.phone||'—');document.getElementById('overviewEmail').textContent='البريد الإلكتروني: '+(state.email||'—');document.getElementById('currency').value=state.currency;

@@ -27,7 +27,6 @@
 <div class="tracker-card"><h3><span class="ar">التحقق من مرجع</span><span class="en">Look up a reference</span></h3><label for="trackerLookup"><span class="ar">أدخل المرجع الداخلي</span><span class="en">Enter internal reference</span></label><input id="trackerLookup" type="text" maxlength="64" placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx" autocomplete="off" dir="ltr"><button type="button" id="lookupTrackerRef"><span class="ar">بحث</span><span class="en">Search</span></button><div id="trackerLookupResult" class="tracker-result" hidden aria-live="polite"></div></div>
 </div></div></section>
 
-<section class="section wrap" id="tracker"><h2>AFAQ GLOBAL TRANSFER TRACKER</h2><p class="lead">خدمة مرجعية داخلية لمتابعة حالة السجلات التي تنشئها آفاق سوريا. هذا الرقم مرجع داخلي وليس UETR مصرفياً ولا يثبت إرسال الأموال أو استلامها.</p><div class="contact"><form id="trackerLookup"><label>رقم المرجع الداخلي</label><input id="trackerRef" placeholder="أدخل رقم مرجع AFAQ" required maxlength="80"><button type="submit">تحقق من السجل</button></form><div id="trackerResult" aria-live="polite" class="muted" style="margin-top:14px"></div><p class="muted" style="font-size:.82rem">نسخة أولية: البحث يعمل على بيانات هذا المتصفح فقط. لا تُدخل بيانات حسابات أو مستندات مصرفية أو معلومات شخصية حساسة.</p></div></section>
 <section class="section wrap" id="approach"><h2>كيف نعمل؟</h2><p class="lead">نبدأ بقاعدة معلومات واضحة، ثم نطوّر عرض المشاريع والشراكات وآليات التواصل تدريجياً.</p><div class="steps"><div class="step"><b>1. التعريف</b><div>تقديم المنصة ومجالاتها.</div></div><div class="step"><b>2. عرض المشاريع</b><div>تنظيم المشاريع والملفات والصور.</div></div><div class="step"><b>3. التواصل والتعاون</b><div>استقبال الاستفسارات ومقترحات التعاون.</div></div></div></section>
 <section class="section band" id="contact"><div class="wrap"><div class="contact"><h2>تواصل معنا</h2><p class="muted">أرسل استفساراً أو مقترح تعاون. في هذه النسخة التجريبية لا يتم إرسال البيانات إلى خادم؛ ستبقى على جهازك فقط.</p><form id="contactForm"><label>الاسم</label><input name="name" required maxlength="100"><label>البريد الإلكتروني</label><input name="email" type="email" required maxlength="160"><label>موضوع الرسالة</label><select name="topic"><option>استفسار عام</option><option>مقترح مشروع</option><option>تعاون وشراكة</option><option>الشركات والخبرات</option></select><label>الرسالة</label><textarea name="message" rows="4" required maxlength="2000"></textarea><button type="submit">حفظ الطلب على هذا الجهاز</button><p id="contactStatus" class="muted" role="status"></p></form></div></div></section>
 </main><footer>© <span id="year"></span> AFAQ SYRIA — منصة اقتصادية وتنموية وإنسانية · <a href="admin.html">لوحة الإدارة</a></footer>
@@ -42,8 +41,9 @@ const defaults=[
 {id:'humanitarian',n:'06',title:'الإيواء والدعم الإنساني',desc:'عرض المبادرات الإنسانية والجهات العاملة في المجال.',intro:'عرض معلومات المبادرات والجهات الإنسانية وبرامج التعافي والإيواء دون جمع تبرعات عبر الموقع.',subs:['الإيواء والسكن','التعليم والتأهيل','الأمن الغذائي','دعم الأسر','التعافي المجتمعي','المنظمات والشركاء']},
 {id:'partners',n:'07',title:'الشركات والشركاء',desc:'التعريف بالشركات والخبرات وفرص التعاون.',intro:'دليل تعريفي للشركات والموردين والخبراء والجهات الراغبة في التعاون.',subs:['الشركات المحلية','الشركات الدولية','الموردون والمصنعون','الخبراء والاستشاريون','الجامعات ومراكز البحث','فرص الشراكة']},
 {id:'technology',n:'08',title:'التقنية والاتصالات',desc:'حلول رقمية واتصالات وبنية تقنية داعمة للتنمية.',intro:'عرض الحلول الرقمية والبنية التقنية والابتكار والخدمات الداعمة للمشاريع.',subs:['البرمجيات والمنصات','الاتصالات والإنترنت','الذكاء الاصطناعي','الأمن السيبراني','إنترنت الأشياء','التدريب والابتكار']}
+,{id:'afaqbank',n:'09',title:'مصرف آفاق',desc:'بوابة الخدمات والأقسام المصرفية الرقمية والتعريفية.',intro:'الواجهة التعريفية لأقسام مصرف آفاق. الأقسام المعروضة تنظيمية وتجريبية، ولا تمثل خدمات مصرفية مفعّلة أو ترخيصاً مصرفياً.',subs:['الحسابات المصرفية','التحويلات المالية','البطاقات المصرفية','المدفوعات والتحصيل','الخدمات المصرفية الرقمية','التمويل والتسهيلات','إدارة الأمان والتحقق','خدمة العملاء والدعم']}
 ];
-function read(){try{return JSON.parse(localStorage.getItem(KEY))||{sectors:defaults,projects:[],requests:[]}}catch(e){return{sectors:defaults,projects:[],requests:[]}}}
+function read(){try{const stored=JSON.parse(localStorage.getItem(KEY))||{};const saved=Array.isArray(stored.sectors)?stored.sectors:[];const sectors=[...defaults.map(base=>saved.find(x=>x.id===base.id)||base),...saved.filter(x=>!defaults.some(base=>base.id===x.id))];return{sectors,projects:Array.isArray(stored.projects)?stored.projects:[],requests:Array.isArray(stored.requests)?stored.requests:[]}}catch(e){return{sectors:defaults,projects:[],requests:[]}}}
 function save(d){localStorage.setItem(KEY,JSON.stringify(d))}
 function renderSectors(){const d=read();document.getElementById('sectorGrid').innerHTML=d.sectors.map(s=>'<article class="card sector" tabindex="0" role="button" data-id="'+s.id+'"><span class="num">'+s.n+'</span><h3>'+esc(s.title)+'</h3><p>'+esc(s.desc)+'</p><p style="color:var(--g2);margin-top:12px">فتح التفاصيل ←</p></article>').join('');document.querySelectorAll('.sector').forEach(el=>{const open=()=>showSector(el.dataset.id);el.addEventListener('click',open);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})})}
 function subDescription(sector, name){
@@ -59,6 +59,15 @@ const templates={
 'التقنية والاتصالات':'يعرض هذا القسم الحلول الرقمية والبنية التقنية والاتصالات والابتكار والأمن والتدريب التقني.'
 };
 const detail={
+'الحسابات المصرفية':'تعريف بأنواع الحسابات ومتطلباتها وإجراءات فتحها، عند توفر الترخيص والخدمات الفعلية.',
+'التحويلات المالية':'معلومات عن التحويلات المحلية والدولية وآليات التتبع، ولا يتم تنفيذ أي تحويل من هذه الواجهة.',
+'البطاقات المصرفية':'تعريف بالبطاقات الافتراضية والمادية ومزاياها ورسومها عند تفعيل الخدمة رسمياً.',
+'المدفوعات والتحصيل':'معلومات عن قنوات الدفع وتحصيل الفواتير والتكاملات المتاحة بعد اعتمادها.',
+'الخدمات المصرفية الرقمية':'التعريف بالخدمات عبر الويب والهاتف وإدارة الحسابات الرقمية عند إطلاقها.',
+'التمويل والتسهيلات':'معلومات عامة عن منتجات التمويل وشروط الأهلية بعد اعتمادها من الجهات المختصة.',
+'إدارة الأمان والتحقق':'إرشادات حماية الحساب والتحقق من الهوية وإدارة وسائل الأمان.',
+'خدمة العملاء والدعم':'قنوات الاستفسار والدعم والشكاوى ومتابعة الطلبات عند تشغيلها.',
+
 'المهارات والتدريب المهني':'المهارات المطلوبة، المسارات التدريبية، الشهادات المهنية، ومصادر التعلم.',
 'المهن الهندسية والفنية':'التخصصات الهندسية والفنية، مجالات العمل، ومتطلبات الخبرة والسلامة.',
 'الإدارة والمالية':'الإدارة، المحاسبة، إدارة المشاريع، التخطيط، والمهارات المالية.',
@@ -118,7 +127,8 @@ box.innerHTML='';
 const close=document.createElement('button');close.type='button';close.className='alt';close.textContent='إغلاق ×';close.addEventListener('click',()=>box.classList.remove('open'));box.append(close);
 const h=document.createElement('h2');h.style.textAlign='right';h.textContent=s.title;box.append(h);
 const intro=document.createElement('p');intro.textContent=s.intro||s.desc;box.append(intro);
-const subHeading=document.createElement('h3');subHeading.textContent='الأقسام الفرعية — اختر قسماً لفتح معلوماته';box.append(subHeading);
+if(s.id==='afaqbank'){const notice=document.createElement('p');notice.className='tracker-note';notice.textContent='تنبيه: هذه بوابة تعريفية وتجريبية فقط. لا توجد حالياً حسابات مصرفية أو تحويلات أو بطاقات أو خدمات مالية مفعّلة من خلال هذا الموقع.';box.append(notice)}
+const subHeading=document.createElement('h3');subHeading.textContent='الأقسام المصرفية — اختر قسماً لفتح معلوماته';box.append(subHeading);
 const subgrid=document.createElement('div');subgrid.className='subgrid';
 (s.subs||[]).forEach((name,i)=>{const b=document.createElement('button');b.type='button';b.className='sub';b.textContent=name+'　›';b.addEventListener('click',()=>{
 subgrid.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
@@ -155,26 +165,13 @@ function renderProjects(){const ps=read().projects;document.getElementById('proj
 document.getElementById('year').textContent=new Date().getFullYear();document.getElementById('language').addEventListener('click',function(){const en=document.body.classList.toggle('english');document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';this.textContent=en?'العربية':'English'});document.getElementById('contactForm').addEventListener('submit',e=>{e.preventDefault();const d=read(),f=new FormData(e.target);d.requests.push({id:Date.now(),name:f.get('name'),email:f.get('email'),topic:f.get('topic'),message:f.get('message'),date:new Date().toISOString()});try{save(d);e.target.reset();document.getElementById('contactStatus').textContent='تم حفظ الطلب محلياً على هذا الجهاز فقط.'}catch(err){document.getElementById('contactStatus').textContent='تعذر الحفظ؛ مساحة التخزين قد تكون ممتلئة.'}});
 // AFAQ internal tracker — client-side prototype only; never represents SWIFT/GPI status.
 const TRACKER_KEY='afaqInternalTransferTrackerV1';
-function renderTrackerResult(record){
- const out=document.getElementById('trackerResult');out.innerHTML='';
- if(!record){out.textContent='لم يتم العثور على سجل بهذا المرجع في بيانات هذا المتصفح.';return}
- const title=document.createElement('strong');title.textContent='السجل: '+record.reference;out.append(title);
- const status=document.createElement('p');status.textContent='الحالة: '+record.statusLabel;out.append(status);
- const note=document.createElement('p');note.textContent='تاريخ الإنشاء: '+new Date(record.createdAt).toLocaleString();out.append(note);
- const disclaimer=document.createElement('p');disclaimer.textContent='هذا سجل داخلي فقط. لا يمثل تأكيداً مصرفياً أو حالة SWIFT.';out.append(disclaimer);
-}
-document.getElementById('trackerLookup').addEventListener('submit',e=>{
- e.preventDefault();let records=[];try{records=JSON.parse(localStorage.getItem(TRACKER_KEY)||'[]')}catch(_){}
- const ref=document.getElementById('trackerRef').value.trim().toUpperCase();
- renderTrackerResult(records.find(x=>x.reference===ref));
-});
 renderSectors();renderProjects();
 
-const TRACKER_KEY='afaqGlobalTrackerDemoV1';
-function trackerRead(){try{const v=JSON.parse(localStorage.getItem(TRACKER_KEY));return Array.isArray(v)?v:[]}catch(e){return[]}}
+const TRACKER_DEMO_KEY='afaqGlobalTrackerDemoV1';
+function trackerRead(){try{const v=JSON.parse(localStorage.getItem(TRACKER_DEMO_KEY));return Array.isArray(v)?v:[]}catch(e){return[]}}
 function trackerUuid(){if(window.crypto&&typeof crypto.randomUUID==='function')return crypto.randomUUID();return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16)})}
 function trackerMessage(el,html){el.hidden=false;el.innerHTML=html}
-document.getElementById('createTrackerRef').addEventListener('click',()=>{const records=trackerRead();const id=trackerUuid();const record={id,createdAt:new Date().toISOString(),status:'Created — local demo only'};records.push(record);try{localStorage.setItem(TRACKER_KEY,JSON.stringify(records));const box=document.getElementById('trackerCreated');box.hidden=false;box.innerHTML='';const label=document.createElement('b');label.textContent=document.body.classList.contains('english')?'Internal reference created':'تم إنشاء المرجع الداخلي';const code=document.createElement('code');code.className='tracker-code';code.textContent=id;const status=document.createElement('p');status.className='tracker-status';status.textContent=record.status;const actions=document.createElement('div');actions.className='tracker-actions';const copy=document.createElement('button');copy.type='button';copy.textContent=document.body.classList.contains('english')?'Copy reference':'نسخ المرجع';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(id);copy.textContent=document.body.classList.contains('english')?'Copied':'تم النسخ'}catch(e){copy.textContent=id}});actions.append(copy);box.append(label,code,status,actions)}catch(e){alert(document.body.classList.contains('english')?'Could not save in this browser.':'تعذر الحفظ في هذا المتصفح.')}});
+document.getElementById('createTrackerRef').addEventListener('click',()=>{const records=trackerRead();const id=trackerUuid();const record={id,createdAt:new Date().toISOString(),status:'Created — local demo only'};records.push(record);try{localStorage.setItem(TRACKER_DEMO_KEY,JSON.stringify(records));const box=document.getElementById('trackerCreated');box.hidden=false;box.innerHTML='';const label=document.createElement('b');label.textContent=document.body.classList.contains('english')?'Internal reference created':'تم إنشاء المرجع الداخلي';const code=document.createElement('code');code.className='tracker-code';code.textContent=id;const status=document.createElement('p');status.className='tracker-status';status.textContent=record.status;const actions=document.createElement('div');actions.className='tracker-actions';const copy=document.createElement('button');copy.type='button';copy.textContent=document.body.classList.contains('english')?'Copy reference':'نسخ المرجع';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(id);copy.textContent=document.body.classList.contains('english')?'Copied':'تم النسخ'}catch(e){copy.textContent=id}});actions.append(copy);box.append(label,code,status,actions)}catch(e){alert(document.body.classList.contains('english')?'Could not save in this browser.':'تعذر الحفظ في هذا المتصفح.')}});
 document.getElementById('lookupTrackerRef').addEventListener('click',()=>{const input=document.getElementById('trackerLookup').value.trim().toLowerCase();const box=document.getElementById('trackerLookupResult');box.hidden=false;box.textContent='';if(!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(input)){box.textContent=document.body.classList.contains('english')?'Invalid UUID v4 format.':'تنسيق المرجع غير صحيح. يجب إدخال UUID v4.';return}const rec=trackerRead().find(x=>x.id.toLowerCase()===input);if(!rec){box.textContent=document.body.classList.contains('english')?'Reference not found in this browser. Records are not shared between devices.':'لم يتم العثور على المرجع في هذا المتصفح. السجلات غير مشتركة بين الأجهزة.';return}const title=document.createElement('b');title.textContent=document.body.classList.contains('english')?'Reference found — local demo':'تم العثور على المرجع — نسخة تجريبية محلية';const code=document.createElement('code');code.className='tracker-code';code.textContent=rec.id;const status=document.createElement('p');status.className='tracker-status';status.textContent=rec.status;const date=document.createElement('p');date.className='tracker-status';date.textContent=new Date(rec.createdAt).toLocaleString();box.append(title,code,status,date)});
 
 </script></body></html>
